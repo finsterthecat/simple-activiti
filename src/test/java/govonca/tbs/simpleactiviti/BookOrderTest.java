@@ -15,32 +15,38 @@ import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class BookOrderTest {
-
-    @Test
-    public void startBookOrder() {
+    private static RuntimeService runtimeService;
+    private static IdentityService identityService;
+    private static TaskService taskService;
+    
+    @BeforeClass
+    public static void init() {
         ProcessEngine processEngine = ProcessEngineConfiguration
                 .createProcessEngineConfigurationFromResourceDefault()
-                //.createStandaloneProcessEngineConfiguration()
-                //.createStandaloneInMemProcessEngineConfiguration()
-                .buildProcessEngine();
+               .buildProcessEngine();
 
         RepositoryService repositoryService = processEngine.getRepositoryService();
-        RuntimeService runtimeService = processEngine.getRuntimeService();
-        IdentityService identityService = processEngine.getIdentityService();
-        TaskService taskService = processEngine.getTaskService();
+        identityService = processEngine.getIdentityService();
+        taskService = processEngine.getTaskService();
         repositoryService.createDeployment()
                 .addClasspathResource("chapter1/bookorder.bpmn20.xml")
                 .deploy();
+        runtimeService = processEngine.getRuntimeService();
+    }
+    
+    @Test
+    public void startBookOrder() {
 
         // remove tasks already present
         List<Task> availableTaskList = taskService.createTaskQuery()
                 .taskName("Work on order").list();
-        for (Task task : availableTaskList) {
+        availableTaskList.stream().forEach((task) -> {
             taskService.complete(task.getId());
-        }
+        });
 
         Map<String, Object> variableMap = new HashMap<>();
         variableMap.put("isbn", "123456");
