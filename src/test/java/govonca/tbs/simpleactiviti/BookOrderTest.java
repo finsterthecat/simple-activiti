@@ -19,7 +19,7 @@ public class BookOrderTest {
     private static final Logger log = LoggerFactory.getLogger(BookOrderTest.class);
 
     @Rule
-    public ActivitiRule activitiRule = new ActivitiRule("activiti.cfg.xml");
+    public ActivitiRule activitiRule = new ActivitiRule("tony/activiti.cfg.xml");
 
     private void startProcessInstance() {
         Map<String, Object> variableMap = new HashMap<>();
