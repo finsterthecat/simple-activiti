@@ -26,7 +26,7 @@ public class SpringTest {
 
 	@Test
 	public void simpleProcessTest() {
-		Map<String, Object> variableMap = new HashMap<String, Object>();
+		Map<String, Object> variableMap = new HashMap<>();
 		variableMap.put("isbn", 123456L);
 		runtimeService.startProcessInstanceByKey("bookorder", variableMap);
 		Task task = taskService.createTaskQuery().singleResult();
