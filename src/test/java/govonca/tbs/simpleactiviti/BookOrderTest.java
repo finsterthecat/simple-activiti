@@ -1,46 +1,43 @@
 package govonca.tbs.simpleactiviti;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.activiti.engine.IdentityService;
-import org.activiti.engine.ProcessEngine;
-import org.activiti.engine.ProcessEngineConfiguration;
-import org.activiti.engine.RepositoryService;
-import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
-import org.junit.BeforeClass;
+import org.activiti.engine.test.ActivitiRule;
+import org.activiti.engine.test.Deployment;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import org.junit.Rule;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BookOrderTest {
-    private static RuntimeService runtimeService;
-    private static IdentityService identityService;
-    private static TaskService taskService;
-    
-    @BeforeClass
-    public static void init() {
-        ProcessEngine processEngine = ProcessEngineConfiguration
-                .createProcessEngineConfigurationFromResourceDefault()
-               .buildProcessEngine();
+    private static final Logger log = LoggerFactory.getLogger(BookOrderTest.class);
 
-        RepositoryService repositoryService = processEngine.getRepositoryService();
-        identityService = processEngine.getIdentityService();
-        taskService = processEngine.getTaskService();
-        repositoryService.createDeployment()
-                .addClasspathResource("chapter1/bookorder.bpmn20.xml")
-                .deploy();
-        runtimeService = processEngine.getRuntimeService();
+    @Rule
+    public ActivitiRule activitiRule = new ActivitiRule("activiti.cfg.xml");
+
+    private void startProcessInstance() {
+        Map<String, Object> variableMap = new HashMap<>();
+        variableMap.put("isbn", "123456");
+        ProcessInstance processInstance =
+                 activitiRule.getRuntimeService()
+                .startProcessInstanceByKey("bookorder", variableMap);
+        assertNotNull(processInstance.getId());
     }
     
     @Test
+    @Deployment(resources={"chapter1/bookorder.bpmn20.xml"})
     public void startBookOrder() {
-
+        log.debug("Start book order");
+        
+        activitiRule.getIdentityService().setAuthenticatedUserId("kermit");
+        final TaskService taskService = activitiRule.getTaskService();
+        
         // remove tasks already present
         List<Task> availableTaskList = taskService.createTaskQuery()
                 .taskName("Work on order").list();
@@ -48,15 +45,11 @@ public class BookOrderTest {
             taskService.complete(task.getId());
         });
 
-        Map<String, Object> variableMap = new HashMap<>();
-        variableMap.put("isbn", "123456");
-        identityService.setAuthenticatedUserId("kermit");
-        ProcessInstance processInstance = runtimeService
-                .startProcessInstanceByKey("bookorder", variableMap);
-        assertNotNull(processInstance.getId());
+        startProcessInstance();
         List<Task> taskList = taskService.createTaskQuery()
                 .taskName("Work on order").list();
         assertEquals(1, taskList.size());
-        System.out.println("found task " + taskList.get(0).getName());
+        log.debug("found task >" + taskList.get(0).getName() + "<");
+        log.debug("End book order");
     }
 }
