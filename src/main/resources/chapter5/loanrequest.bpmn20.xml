@@ -76,7 +76,7 @@
         </scriptTask>
         <scriptTask id="informCustomerGood" scriptFormat="groovy">
             <script>
-                out:println "Hello " + loanApplication.customerName  + ". We decided to give you the load for " + loanApplication.requestedAmount + "!"
+                out:println "Hello " + loanApplication.customerName  + ". We decided to give you the loan for " + loanApplication.requestedAmount + "!"
             </script>
         </scriptTask>
         <sequenceFlow sourceRef="informCustomerBad" targetRef="theEnd" />

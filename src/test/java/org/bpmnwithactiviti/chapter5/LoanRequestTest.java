@@ -18,54 +18,53 @@ import org.slf4j.LoggerFactory;
 
 public class LoanRequestTest {
 
-    @Rule
-    public ActivitiRule activitiRule = new ActivitiRule("activiti.cfg-mem-fullhistory.xml");
-    
-    private static final Logger log = LoggerFactory.getLogger(LoanRequestTest.class);
+  @Rule
+  public ActivitiRule activitiRule = new ActivitiRule("activiti.cfg-mem-fullhistory.xml");
 
-    @Test
-    @Deployment(resources = {"chapter5/loanrequest_firstpart.bpmn20.xml"})
-    public void creditCheckTrue() {
-        Map<String, Object> processVariables = new HashMap<>();
-        processVariables.put("name", "Miss Piggy");
-        processVariables.put("income", 100L);
-        processVariables.put("loanAmount", 10L);
-        processVariables.put("emailAddress", "miss.piggy@localhost");
-        log.debug("INCOME!! " + processVariables.get("income"));
-        activitiRule.getRuntimeService().startProcessInstanceByKey(
-                "loanrequest", processVariables);
+  private static final Logger log = LoggerFactory.getLogger(LoanRequestTest.class);
 
-        log.debug("INCOME!! " + processVariables.get("income"));
+  @Test
+  @Deployment(resources = {"chapter5/loanrequest_firstpart.bpmn20.xml"})
+  public void creditCheckTrue() {
+    Map<String, Object> processVariables = new HashMap<>();
+    processVariables.put("name", "Miss Piggy");
+    processVariables.put("income", 100L);
+    processVariables.put("loanAmount", 10L);
+    processVariables.put("emailAddress", "miss.piggy@localhost");
+    log.debug("INCOME!! " + processVariables.get("income"));
+    activitiRule.getRuntimeService().startProcessInstanceByKey(
+            "loanrequest", processVariables);
 
-        List<HistoricDetail> historyVariables = activitiRule.getHistoryService()
-                .createHistoricDetailQuery()
-                .variableUpdates()
-                .orderByVariableName()
-                .asc()
-                .list();
+    log.debug("INCOME!! " + processVariables.get("income"));
 
-        for (HistoricDetail hd : historyVariables) {
-            HistoricVariableUpdate hvu = (HistoricVariableUpdate) hd;
-            log.debug("history! " + hvu.getVariableName() + " = " + hvu.getValue());
-        }
-        assertNotNull(historyVariables);
-        assertEquals(7, historyVariables.size());
-        HistoricVariableUpdate loanAppUpdate = ((HistoricVariableUpdate) historyVariables.get(5));
-        assertEquals("loanApplication", loanAppUpdate.getVariableName());
-        LoanApplication la = (LoanApplication) loanAppUpdate.getValue();
-        assertEquals(true, la.isCreditCheckOk());
-    }
+    List<HistoricDetail> historyVariables = activitiRule.getHistoryService()
+            .createHistoricDetailQuery()
+            .variableUpdates()
+            .orderByVariableName()
+            .asc()
+            .list();
 
-    @Test
-    @Deployment(resources = {"chapter5/loanrequest_firstpart.bpmn20.xml"})
-    public void mySanity() {
-        Map<String, Object> processVariables = new HashMap<>();
-        processVariables.put("waah", 1001);
-        log.debug("I'm insane!! " + processVariables.get("waah"));
+    historyVariables.stream().map((hd) -> (HistoricVariableUpdate) hd).forEach((hvu) -> {
+      log.debug("history! " + hvu.getVariableName() + " = " + hvu.getValue());
+    });
+    assertNotNull(historyVariables);
+    assertEquals(7, historyVariables.size());
+    HistoricVariableUpdate loanAppUpdate = ((HistoricVariableUpdate) historyVariables.get(5));
+    assertEquals("loanApplication", loanAppUpdate.getVariableName());
+    LoanApplication la = (LoanApplication) loanAppUpdate.getValue();
+    assertEquals(true, la.isCreditCheckOk());
+  }
 
-        int num = 2001;
-        processVariables.put("num", num);
-        assertEquals(num, processVariables.get("num"));
-        log.debug("Am I? " + processVariables.get("num"));
-    }
+  @Test
+  @Deployment(resources = {"chapter5/loanrequest_firstpart.bpmn20.xml"})
+  public void mySanity() {
+    Map<String, Object> processVariables = new HashMap<>();
+    processVariables.put("waah", 1001);
+    log.debug("I'm insane!! " + processVariables.get("waah"));
+
+    int num = 2001;
+    processVariables.put("num", num);
+    assertEquals(num, processVariables.get("num"));
+    log.debug("Am I? " + processVariables.get("num"));
+  }
 }
