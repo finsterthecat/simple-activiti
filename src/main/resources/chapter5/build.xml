@@ -22,7 +22,7 @@
 	<target name="loanrequest.bar" depends="dist.mkdir">
 		 <jar destfile="${dist.dir}/loanrequest.bar"
 		       basedir="."
-		 	     includes="*.bpmn20.xml"
+		 	     includes="*.bpmn"
 		  />
 	</target>
 	
