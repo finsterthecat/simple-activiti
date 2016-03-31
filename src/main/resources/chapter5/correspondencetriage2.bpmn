@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.bpmnwithactiviti.org/loanrequest" id="taskAssigneeExample">
+  <process id="ecorrespondenceTriage2" name="eCorrespondence Triage 2" isExecutable="true">
+    <startEvent id="theStart" name="Start">
+      <extensionElements>
+        <activiti:formProperty id="subject" name="Subject" type="string" required="true"></activiti:formProperty>
+        <activiti:formProperty id="fromName" name="From" type="string" required="true"></activiti:formProperty>
+        <activiti:formProperty id="emailAddress" name="Email address" type="string" required="true"></activiti:formProperty>
+        <activiti:formProperty id="receivedDate" name="Received date" type="date" required="true"></activiti:formProperty>
+      </extensionElements>
+    </startEvent>
+    <sequenceFlow id="sequenceFlow-beaaeec1-9a45-4f26-bf44-964cb2b31801" sourceRef="theStart" targetRef="createCandidate"></sequenceFlow>
+    <serviceTask id="createCandidate" name="Create Candidate" activiti:class="org.bpmnwithactiviti.chapter5.CreateEcorrespondenceCandidate"></serviceTask>
+    <sequenceFlow id="sequenceFlow-6a043df4-d1a7-4a4f-9f12-a68ad079b2bd" sourceRef="createCandidate" targetRef="evaluateOfficial"></sequenceFlow>
+    <userTask id="evaluateOfficial" name="Evaluate whether official correspondence" activiti:assignee="fozzie">
+      <extensionElements>
+        <activiti:formProperty id="subject" name="Subject" expression="${eCorrespondenceCandidate.subject}" writable="false"></activiti:formProperty>
+        <activiti:formProperty id="fromName" name="From" expression="${eCorrespondenceCandidate.fromName}" writable="false"></activiti:formProperty>
+        <activiti:formProperty id="emailAddress" name="Email address" expression="${eCorrespondenceCandidate.emailAddress}" writable="false"></activiti:formProperty>
+        <activiti:formProperty id="receivedDate" name="Received date" expression="${eCorrespondenceCandidate.receivedDate}" writable="false"></activiti:formProperty>
+        <activiti:formProperty id="isOfficial" name="Does this require a response?" type="enum" required="true">
+          <activiti:value id="true" name="Yes"></activiti:value>
+          <activiti:value id="false" name="No"></activiti:value>
+        </activiti:formProperty>
+      </extensionElements>
+    </userTask>
+    <sequenceFlow id="sequenceFlow-101" sourceRef="evaluateOfficial" targetRef="isOfficialGateway"></sequenceFlow>
+    <endEvent id="theEnd" name="The End"></endEvent>
+    <exclusiveGateway id="isOfficialGateway" name="Is Official?"></exclusiveGateway>
+    <sequenceFlow id="officialCorrespondenceFlow" name="Official Correspondence" sourceRef="isOfficialGateway" targetRef="officialDocWorkFlow">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${isOfficial == true}]]></conditionExpression>
+    </sequenceFlow>
+    <scriptTask id="archive" name="Archive Unofficial Correspondence" scriptFormat="groovy" activiti:autoStoreVariables="false">
+      <script>out:println "eCorrespondence with subject '" + eCorrespondenceCandidate.subject  + "' is not official. Sending to archive."</script>
+    </scriptTask>
+    <sequenceFlow id="ArchiveFlow" name="Archive" sourceRef="isOfficialGateway" targetRef="archive">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${isOfficial == false}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow11" sourceRef="archive" targetRef="theEnd"></sequenceFlow>
+    <sequenceFlow id="flow16" sourceRef="officialDocWorkFlow" targetRef="allDoneTask"></sequenceFlow>
+    <subProcess id="officialDocWorkFlow" name="Official Document Workflow">
+      <exclusiveGateway id="pickRecipientGateway" name="Pick Recipient"></exclusiveGateway>
+      <sequenceFlow id="ministerResponseFlow" name="Minister Response" sourceRef="pickRecipientGateway" targetRef="confirmMinister">
+        <conditionExpression xsi:type="tFormalExpression"><![CDATA[${recipient == 'minister'}]]></conditionExpression>
+      </sequenceFlow>
+      <sequenceFlow id="headResponseFlow" name="Head Response" sourceRef="pickRecipientGateway" targetRef="acknowledgeHead">
+        <conditionExpression xsi:type="tFormalExpression"><![CDATA[${recipient == 'head'}]]></conditionExpression>
+      </sequenceFlow>
+      <sequenceFlow id="premierResponseFlow" name="Premier Response" sourceRef="pickRecipientGateway" targetRef="getSignature">
+        <conditionExpression xsi:type="tFormalExpression"><![CDATA[${recipient == 'premier'}]]></conditionExpression>
+      </sequenceFlow>
+      <exclusiveGateway id="confirmMinisterGateway" name="Is this for the Minister?"></exclusiveGateway>
+      <sequenceFlow id="ministerConfirmedFlow" name="Minister is Confirmed" sourceRef="confirmMinisterGateway" targetRef="endevent1">
+        <conditionExpression xsi:type="tFormalExpression"><![CDATA[${isForMinister == true}]]></conditionExpression>
+      </sequenceFlow>
+      <sequenceFlow id="changeMyMindFlow" name="Changed My Mind" sourceRef="confirmMinisterGateway" targetRef="determineRecipient">
+        <conditionExpression xsi:type="tFormalExpression"><![CDATA[${isForMinister == false}]]></conditionExpression>
+      </sequenceFlow>
+      <userTask id="determineRecipient" name="Determine Recipient" activiti:assignee="fozzie">
+        <extensionElements>
+          <activiti:formProperty id="subject" name="Subject" expression="${eCorrespondenceCandidate.subject}" writable="false"></activiti:formProperty>
+          <activiti:formProperty id="fromName" name="From" expression="${eCorrespondenceCandidate.fromName}" writable="false"></activiti:formProperty>
+          <activiti:formProperty id="emailAddress" name="Email address" expression="${eCorrespondenceCandidate.emailAddress}" writable="false"></activiti:formProperty>
+          <activiti:formProperty id="receivedDate" name="Received date" expression="${eCorrespondenceCandidate.receivedDate}" writable="false"></activiti:formProperty>
+          <activiti:formProperty id="recipient" name="Recipient" type="enum" required="true">
+            <activiti:value id="minister" name="Minister"></activiti:value>
+            <activiti:value id="premier" name="Premier"></activiti:value>
+            <activiti:value id="head" name="Head, Enterprise Applications"></activiti:value>
+          </activiti:formProperty>
+        </extensionElements>
+      </userTask>
+      <sequenceFlow id="sequenceFlow-100" sourceRef="determineRecipient" targetRef="pickRecipientGateway"></sequenceFlow>
+      <userTask id="confirmMinister" name="Confirm Minister Response" activiti:candidateGroups="sales">
+        <extensionElements>
+          <activiti:formProperty id="subject" name="Subject" expression="${eCorrespondenceCandidate.subject}" writable="false"></activiti:formProperty>
+          <activiti:formProperty id="fromName" name="From" expression="${eCorrespondenceCandidate.fromName}" writable="false"></activiti:formProperty>
+          <activiti:formProperty id="emailAddress" name="Email address" expression="${eCorrespondenceCandidate.emailAddress}" writable="false"></activiti:formProperty>
+          <activiti:formProperty id="receivedDate" name="Received date" expression="${eCorrespondenceCandidate.receivedDate}" writable="false"></activiti:formProperty>
+          <activiti:formProperty id="recipient" name="Recipient" expression="${recipient}" writable="false"></activiti:formProperty>
+          <activiti:formProperty id="isForMinister" name="Is this really for the Minister?" type="enum" required="true">
+            <activiti:value id="true" name="Yes"></activiti:value>
+            <activiti:value id="false" name="No"></activiti:value>
+          </activiti:formProperty>
+        </extensionElements>
+      </userTask>
+      <sequenceFlow id="flow10" sourceRef="confirmMinister" targetRef="confirmMinisterGateway"></sequenceFlow>
+      <startEvent id="officialDocFlowStart" name="Official Doc Flow Start"></startEvent>
+      <sequenceFlow id="flow15" sourceRef="officialDocFlowStart" targetRef="determineRecipient"></sequenceFlow>
+      <endEvent id="endevent1" name="End"></endEvent>
+      <userTask id="getSignature" name="Get Signature" activiti:candidateGroups="sales">
+        <extensionElements>
+          <activiti:formProperty id="subject" name="Subject" expression="${eCorrespondenceCandidate.subject}" writable="false"></activiti:formProperty>
+          <activiti:formProperty id="fromName" name="From" expression="${eCorrespondenceCandidate.fromName}" writable="false"></activiti:formProperty>
+          <activiti:formProperty id="emailAddress" name="Email address" expression="${eCorrespondenceCandidate.emailAddress}" writable="false"></activiti:formProperty>
+          <activiti:formProperty id="receivedDate" name="Received date" expression="${eCorrespondenceCandidate.receivedDate}" writable="false"></activiti:formProperty>
+          <activiti:formProperty id="recipient" name="Recipient" expression="${recipient}" writable="false"></activiti:formProperty>
+          <activiti:formProperty id="signHere" name="Sign here please!" type="string" required="true"></activiti:formProperty>
+        </extensionElements>
+      </userTask>
+      <sequenceFlow id="flow8" sourceRef="getSignature" targetRef="endevent1"></sequenceFlow>
+      <userTask id="acknowledgeHead" name="Acknowledge Head Response" activiti:candidateGroups="marketing"></userTask>
+      <sequenceFlow id="flow6" sourceRef="acknowledgeHead" targetRef="endevent1"></sequenceFlow>
+    </subProcess>
+    <scriptTask id="allDoneTask" name="All Done" scriptFormat="groovy" activiti:autoStoreVariables="false">
+      <script>out:println "Response to correspondence received " + eCorrespondenceCandidate.receivedDate + " from " + eCorrespondenceCandidate.fromName + " on " + eCorrespondenceCandidate.subject + " was sent out by " + recipient</script>
+    </scriptTask>
+    <sequenceFlow id="flow17" sourceRef="allDoneTask" targetRef="theEnd"></sequenceFlow>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_ecorrespondenceTriage2">
+    <bpmndi:BPMNPlane bpmnElement="ecorrespondenceTriage2" id="BPMNPlane_ecorrespondenceTriage2">
+      <bpmndi:BPMNShape bpmnElement="theStart" id="BPMNShape_theStart">
+        <omgdc:Bounds height="35.0" width="35.0" x="270.0" y="753.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="createCandidate" id="BPMNShape_createCandidate">
+        <omgdc:Bounds height="60.0" width="100.0" x="410.0" y="739.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="evaluateOfficial" id="BPMNShape_evaluateOfficial">
+        <omgdc:Bounds height="76.0" width="140.0" x="600.0" y="739.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="theEnd" id="BPMNShape_theEnd">
+        <omgdc:Bounds height="35.0" width="35.0" x="2290.0" y="600.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="isOfficialGateway" id="BPMNShape_isOfficialGateway">
+        <omgdc:Bounds height="40.0" width="40.0" x="879.0" y="771.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="archive" id="BPMNShape_archive">
+        <omgdc:Bounds height="71.0" width="105.0" x="1693.0" y="1071.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="officialDocWorkFlow" id="BPMNShape_officialDocWorkFlow">
+        <omgdc:Bounds height="591.0" width="931.0" x="1090.0" y="130.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="pickRecipientGateway" id="BPMNShape_pickRecipientGateway">
+        <omgdc:Bounds height="40.0" width="40.0" x="1460.0" y="401.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="confirmMinisterGateway" id="BPMNShape_confirmMinisterGateway">
+        <omgdc:Bounds height="40.0" width="40.0" x="1746.0" y="251.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="determineRecipient" id="BPMNShape_determineRecipient">
+        <omgdc:Bounds height="60.0" width="100.0" x="1290.0" y="310.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="confirmMinister" id="BPMNShape_confirmMinister">
+        <omgdc:Bounds height="65.0" width="105.0" x="1580.0" y="305.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="officialDocFlowStart" id="BPMNShape_officialDocFlowStart">
+        <omgdc:Bounds height="35.0" width="35.0" x="1180.0" y="320.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent1" id="BPMNShape_endevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="1896.0" y="376.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="getSignature" id="BPMNShape_getSignature">
+        <omgdc:Bounds height="55.0" width="105.0" x="1606.0" y="418.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="acknowledgeHead" id="BPMNShape_acknowledgeHead">
+        <omgdc:Bounds height="71.0" width="105.0" x="1606.0" y="551.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="allDoneTask" id="BPMNShape_allDoneTask">
+        <omgdc:Bounds height="55.0" width="105.0" x="2170.0" y="460.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="sequenceFlow-beaaeec1-9a45-4f26-bf44-964cb2b31801" id="BPMNEdge_sequenceFlow-beaaeec1-9a45-4f26-bf44-964cb2b31801">
+        <omgdi:waypoint x="305.0" y="770.0"></omgdi:waypoint>
+        <omgdi:waypoint x="410.0" y="769.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sequenceFlow-6a043df4-d1a7-4a4f-9f12-a68ad079b2bd" id="BPMNEdge_sequenceFlow-6a043df4-d1a7-4a4f-9f12-a68ad079b2bd">
+        <omgdi:waypoint x="510.0" y="769.0"></omgdi:waypoint>
+        <omgdi:waypoint x="600.0" y="777.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sequenceFlow-101" id="BPMNEdge_sequenceFlow-101">
+        <omgdi:waypoint x="740.0" y="777.0"></omgdi:waypoint>
+        <omgdi:waypoint x="879.0" y="791.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="officialCorrespondenceFlow" id="BPMNEdge_officialCorrespondenceFlow">
+        <omgdi:waypoint x="899.0" y="771.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1555.0" y="721.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="42.0" width="100.0" x="1001.0" y="729.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="ArchiveFlow" id="BPMNEdge_ArchiveFlow">
+        <omgdi:waypoint x="899.0" y="811.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1745.0" y="1071.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="38.0" x="1001.0" y="873.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow11" id="BPMNEdge_flow11">
+        <omgdi:waypoint x="1745.0" y="1071.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2307.0" y="635.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow16" id="BPMNEdge_flow16">
+        <omgdi:waypoint x="2021.0" y="425.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2222.0" y="460.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="ministerResponseFlow" id="BPMNEdge_ministerResponseFlow">
+        <omgdi:waypoint x="1480.0" y="401.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1632.0" y="370.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="89.0" x="1450.0" y="343.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="headResponseFlow" id="BPMNEdge_headResponseFlow">
+        <omgdi:waypoint x="1480.0" y="441.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1658.0" y="551.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="77.0" x="1550.0" y="506.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="premierResponseFlow" id="BPMNEdge_premierResponseFlow">
+        <omgdi:waypoint x="1500.0" y="421.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1606.0" y="445.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="88.0" x="1530.0" y="408.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="ministerConfirmedFlow" id="BPMNEdge_ministerConfirmedFlow">
+        <omgdi:waypoint x="1766.0" y="291.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1912.0" y="340.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1913.0" y="376.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="42.0" width="100.0" x="1811.0" y="296.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="changeMyMindFlow" id="BPMNEdge_changeMyMindFlow">
+        <omgdi:waypoint x="1746.0" y="271.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1530.0" y="268.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1340.0" y="310.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="100.0" x="1460.0" y="237.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sequenceFlow-100" id="BPMNEdge_sequenceFlow-100">
+        <omgdi:waypoint x="1340.0" y="370.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1480.0" y="401.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow10" id="BPMNEdge_flow10">
+        <omgdi:waypoint x="1632.0" y="305.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1766.0" y="291.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow15" id="BPMNEdge_flow15">
+        <omgdi:waypoint x="1215.0" y="337.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1290.0" y="340.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow8" id="BPMNEdge_flow8">
+        <omgdi:waypoint x="1711.0" y="445.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1913.0" y="411.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow6" id="BPMNEdge_flow6">
+        <omgdi:waypoint x="1658.0" y="551.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1913.0" y="411.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow17" id="BPMNEdge_flow17">
+        <omgdi:waypoint x="2222.0" y="515.0"></omgdi:waypoint>
+        <omgdi:waypoint x="2307.0" y="600.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

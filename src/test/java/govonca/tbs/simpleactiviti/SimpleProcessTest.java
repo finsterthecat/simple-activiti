@@ -8,7 +8,6 @@ import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.junit.Test;
-import static org.junit.Assert.assertNotNull;
 
 public class SimpleProcessTest {
 	

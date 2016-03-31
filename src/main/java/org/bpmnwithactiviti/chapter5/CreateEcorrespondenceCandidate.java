@@ -19,8 +19,6 @@ public class CreateEcorrespondenceCandidate implements JavaDelegate {
         ecc.setFromName(execution.getVariable("fromName", String.class));
         ecc.setEmailAddress(execution.getVariable("emailAddress", String.class));
         ecc.setReceivedDate(execution.getVariable("receivedDate", Date.class));
-        ecc.setOfficial(true);
-        ecc.setRecipient("head");
         execution.setVariable("eCorrespondenceCandidate", ecc);
     }
 }
