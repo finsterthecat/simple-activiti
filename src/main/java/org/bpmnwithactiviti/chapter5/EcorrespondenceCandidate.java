@@ -11,7 +11,7 @@ public class EcorrespondenceCandidate implements Serializable {
 	private String fromName;
 	private String emailAddress;
 	private Date receivedDate;
-	private boolean isOfficial;
+	private String isOfficial;
 	private String recipient;
 	
 	public String getSubject() {
@@ -38,10 +38,10 @@ public class EcorrespondenceCandidate implements Serializable {
 	public void setReceivedDate(Date receivedDate) {
 		this.receivedDate = receivedDate;
 	}
-	public boolean isOfficial() {
+	public String getOfficial() {
 		return isOfficial;
 	}
-	public void setOfficial(boolean isOfficial) {
+	public void setOfficial(String isOfficial) {
 		this.isOfficial = isOfficial;
 	}
 	public String getRecipient() {

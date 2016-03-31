@@ -18,7 +18,7 @@
         <activiti:formProperty id="fromName" name="From" expression="${eCorrespondenceCandidate.fromName}" writable="false"></activiti:formProperty>
         <activiti:formProperty id="emailAddress" name="Email address" expression="${eCorrespondenceCandidate.emailAddress}" writable="false"></activiti:formProperty>
         <activiti:formProperty id="receivedDate" name="Received date" expression="${eCorrespondenceCandidate.receivedDate}" writable="false"></activiti:formProperty>
-        <activiti:formProperty id="isOfficial" name="Does this require a response?" type="enum" expression="${eCorrespondenceCandidate.official}" required="true">
+        <activiti:formProperty id="isOfficial" name="Does this require a response?" type="enum" required="true">
           <activiti:value id="true" name="Yes"></activiti:value>
           <activiti:value id="false" name="No"></activiti:value>
         </activiti:formProperty>
@@ -31,8 +31,7 @@
         <activiti:formProperty id="fromName" name="From" expression="${eCorrespondenceCandidate.fromName}" writable="false"></activiti:formProperty>
         <activiti:formProperty id="emailAddress" name="Email address" expression="${eCorrespondenceCandidate.emailAddress}" writable="false"></activiti:formProperty>
         <activiti:formProperty id="receivedDate" name="Received date" expression="${eCorrespondenceCandidate.receivedDate}" writable="false"></activiti:formProperty>
-        <activiti:formProperty id="isOfficial" name="Does this require a response?" expression="${eCorrespondenceCandidate.official}" writable="false"></activiti:formProperty>
-        <activiti:formProperty id="recipient" name="Recipient" type="enum" expression="${eCorrespondenceCandidate.recipient}" required="true">
+        <activiti:formProperty id="recipient" name="Recipient" type="enum" required="true">
           <activiti:value id="minister" name="Minister"></activiti:value>
           <activiti:value id="premier" name="Premier"></activiti:value>
           <activiti:value id="head" name="Head, Enterprise Applications"></activiti:value>
@@ -43,21 +42,21 @@
     <endEvent id="theEnd" name="The End"></endEvent>
     <exclusiveGateway id="pickRecipientGateway" name="Pick Recipient"></exclusiveGateway>
     <exclusiveGateway id="isOfficialGateway" name="Is Official?"></exclusiveGateway>
-    <sequenceFlow id="flow1" sourceRef="isOfficialGateway" targetRef="determineRecipient">
-      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${isOfficial = true}]]></conditionExpression>
+    <sequenceFlow id="officialCorrespondenceFlow" name="Official Correspondence" sourceRef="isOfficialGateway" targetRef="determineRecipient">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${isOfficial == true}]]></conditionExpression>
     </sequenceFlow>
     <scriptTask id="archive" name="Archive Unofficial Correspondence" scriptFormat="javascript" activiti:autoStoreVariables="false">
       <script>out:println "eCorrespondence with subject '" + eCorrespondenceCandidate.subject  + "' is not official. Sending to archive."</script>
     </scriptTask>
-    <sequenceFlow id="flow2" sourceRef="isOfficialGateway" targetRef="archive">
+    <sequenceFlow id="ArchiveFlow" name="Archive" sourceRef="isOfficialGateway" targetRef="archive">
       <conditionExpression xsi:type="tFormalExpression"><![CDATA[${isOfficial == false}]]></conditionExpression>
     </sequenceFlow>
-    <sequenceFlow id="flow3" sourceRef="pickRecipientGateway" targetRef="confirmMinister">
-      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${recipient == "minister"}]]></conditionExpression>
+    <sequenceFlow id="ministerResponseFlow" name="Minister Response" sourceRef="pickRecipientGateway" targetRef="confirmMinister">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${recipient == minister}]]></conditionExpression>
     </sequenceFlow>
     <userTask id="acknowledgeHead" name="Acknowledge Head Response" activiti:candidateGroups="marketing"></userTask>
-    <sequenceFlow id="flow5" sourceRef="pickRecipientGateway" targetRef="acknowledgeHead">
-      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${recipient == "head"}]]></conditionExpression>
+    <sequenceFlow id="headResponseFlow" name="Head Response" sourceRef="pickRecipientGateway" targetRef="acknowledgeHead">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${recipient == head}]]></conditionExpression>
     </sequenceFlow>
     <sequenceFlow id="flow6" sourceRef="acknowledgeHead" targetRef="theEnd"></sequenceFlow>
     <userTask id="getSignature" name="Get Signature">
@@ -66,7 +65,6 @@
         <activiti:formProperty id="fromName" name="From" expression="${eCorrespondenceCandidate.fromName}" writable="false"></activiti:formProperty>
         <activiti:formProperty id="emailAddress" name="Email address" expression="${eCorrespondenceCandidate.emailAddress}" writable="false"></activiti:formProperty>
         <activiti:formProperty id="receivedDate" name="Received date" expression="${eCorrespondenceCandidate.receivedDate}" writable="false"></activiti:formProperty>
-        <activiti:formProperty id="isOfficial" name="Does this require a response?" expression="${eCorrespondenceCandidate.official}" writable="false"></activiti:formProperty>
         <activiti:formProperty id="recipient" name="Recipient" expression="${eCorrespondenceCandidate.recipient}" writable="false"></activiti:formProperty>
         <activiti:formProperty id="signHere" name="Sign here please!" type="string" required="true"></activiti:formProperty>
       </extensionElements>
@@ -78,7 +76,6 @@
         <activiti:formProperty id="fromName" name="From" expression="${eCorrespondenceCandidate.fromName}" writable="false"></activiti:formProperty>
         <activiti:formProperty id="emailAddress" name="Email address" expression="${eCorrespondenceCandidate.emailAddress}" writable="false"></activiti:formProperty>
         <activiti:formProperty id="receivedDate" name="Received date" expression="${eCorrespondenceCandidate.receivedDate}" writable="false"></activiti:formProperty>
-        <activiti:formProperty id="isOfficial" name="Does this require a response?" expression="${eCorrespondenceCandidate.official}" writable="false"></activiti:formProperty>
         <activiti:formProperty id="recipient" name="Recipient" expression="${eCorrespondenceCandidate.recipient}" writable="false"></activiti:formProperty>
         <activiti:formProperty id="isForMinister" name="Is this really for the Minister?" type="enum" required="true">
           <activiti:value id="true" name="Yes"></activiti:value>
@@ -88,8 +85,8 @@
     </userTask>
     <sequenceFlow id="flow10" sourceRef="confirmMinister" targetRef="confirmMinisterGateway"></sequenceFlow>
     <sequenceFlow id="flow11" sourceRef="archive" targetRef="theEnd"></sequenceFlow>
-    <sequenceFlow id="flow12" sourceRef="pickRecipientGateway" targetRef="getSignature">
-      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${recipient == "premier"}]]></conditionExpression>
+    <sequenceFlow id="premierResponseFlow" name="Premier Response" sourceRef="pickRecipientGateway" targetRef="getSignature">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${recipient == premier}]]></conditionExpression>
     </sequenceFlow>
     <exclusiveGateway id="confirmMinisterGateway" name="Is this for the Minister?"></exclusiveGateway>
     <sequenceFlow id="flow13" sourceRef="confirmMinisterGateway" targetRef="theEnd">
@@ -153,21 +150,33 @@
         <omgdi:waypoint x="790.0" y="129.0"></omgdi:waypoint>
         <omgdi:waypoint x="930.0" y="160.0"></omgdi:waypoint>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
+      <bpmndi:BPMNEdge bpmnElement="officialCorrespondenceFlow" id="BPMNEdge_officialCorrespondenceFlow">
         <omgdi:waypoint x="660.0" y="181.0"></omgdi:waypoint>
         <omgdi:waypoint x="790.0" y="129.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="39.0" width="100.0" x="700.0" y="157.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="flow2" id="BPMNEdge_flow2">
+      <bpmndi:BPMNEdge bpmnElement="ArchiveFlow" id="BPMNEdge_ArchiveFlow">
         <omgdi:waypoint x="660.0" y="221.0"></omgdi:waypoint>
         <omgdi:waypoint x="1125.0" y="500.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="100.0" x="660.0" y="221.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="flow3" id="BPMNEdge_flow3">
+      <bpmndi:BPMNEdge bpmnElement="ministerResponseFlow" id="BPMNEdge_ministerResponseFlow">
         <omgdi:waypoint x="930.0" y="160.0"></omgdi:waypoint>
         <omgdi:waypoint x="1082.0" y="129.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="100.0" x="920.0" y="131.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="flow5" id="BPMNEdge_flow5">
+      <bpmndi:BPMNEdge bpmnElement="headResponseFlow" id="BPMNEdge_headResponseFlow">
         <omgdi:waypoint x="930.0" y="200.0"></omgdi:waypoint>
         <omgdi:waypoint x="1108.0" y="310.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="100.0" x="920.0" y="245.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow6" id="BPMNEdge_flow6">
         <omgdi:waypoint x="1108.0" y="310.0"></omgdi:waypoint>
@@ -185,9 +194,12 @@
         <omgdi:waypoint x="1125.0" y="500.0"></omgdi:waypoint>
         <omgdi:waypoint x="1537.0" y="186.0"></omgdi:waypoint>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="flow12" id="BPMNEdge_flow12">
+      <bpmndi:BPMNEdge bpmnElement="premierResponseFlow" id="BPMNEdge_premierResponseFlow">
         <omgdi:waypoint x="950.0" y="180.0"></omgdi:waypoint>
         <omgdi:waypoint x="1056.0" y="204.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="100.0" x="957.0" y="172.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow13" id="BPMNEdge_flow13">
         <omgdi:waypoint x="1244.0" y="45.0"></omgdi:waypoint>
