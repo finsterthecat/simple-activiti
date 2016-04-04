@@ -86,31 +86,30 @@
       <sequenceFlow id="premierSignedFlow" name="Premier Signed" sourceRef="getSignature" targetRef="endevent1"></sequenceFlow>
       <userTask id="acknowledgeHead" name="Acknowledge Head Response" activiti:candidateGroups="marketing"></userTask>
       <sequenceFlow id="headAcknowledgedFlow" name="Head Acknowledged" sourceRef="acknowledgeHead" targetRef="endevent1"></sequenceFlow>
-      <boundaryEvent id="giveToMinisterTimer" name="Delegate to Minister Timer" attachedToRef="getSignature" cancelActivity="true">
+      <boundaryEvent id="getSignatureTimer" name="Get Signature Timer" attachedToRef="getSignature" cancelActivity="true">
         <timerEventDefinition>
           <timeDuration>PT1M</timeDuration>
         </timerEventDefinition>
       </boundaryEvent>
-      <sequenceFlow id="delegateToMinisterFlow" name="Delegate To Minister" sourceRef="errorendevent2" targetRef="errorendevent2"></sequenceFlow>
-      <boundaryEvent id="giveToHeadTimer" name="Give To Head Timer" attachedToRef="confirmMinister" cancelActivity="true">
+      <boundaryEvent id="confirmMinisterTimer" name="Confirm Minister Timer" attachedToRef="confirmMinister" cancelActivity="true">
         <timerEventDefinition>
           <timeDuration>PT1M</timeDuration>
         </timerEventDefinition>
       </boundaryEvent>
-      <boundaryEvent id="giveToPremierTimer" name="Give To Premier Timer" attachedToRef="acknowledgeHead" cancelActivity="true">
+      <boundaryEvent id="acknowledgeHeadTimer" name="Acknowledge Head Timer" attachedToRef="acknowledgeHead" cancelActivity="true">
         <timerEventDefinition>
           <timeDuration>PT1M</timeDuration>
         </timerEventDefinition>
       </boundaryEvent>
-      <sequenceFlow id="delegateToHeadFlow" name="Delegate To Head" sourceRef="giveToHeadTimer" targetRef="errorendevent2"></sequenceFlow>
-      <sequenceFlow id="delegateToPremierFlow" name="Delegate To Premier" sourceRef="giveToPremierTimer" targetRef="errorendevent2"></sequenceFlow>
+      <sequenceFlow id="confirmMinisterTimeoutFlow" name="Confirm Minister Timeout" sourceRef="confirmMinisterTimer" targetRef="errorendevent2"></sequenceFlow>
+      <sequenceFlow id="acknowledgeHeadTimeoutFlow" name="Acknowledge Head Timeout" sourceRef="acknowledgeHeadTimer" targetRef="errorendevent2"></sequenceFlow>
       <endEvent id="errorendevent1" name="ErrorEnd">
         <errorEventDefinition errorRef="error100"></errorEventDefinition>
       </endEvent>
       <endEvent id="errorendevent2" name="ErrorEnd">
         <errorEventDefinition errorRef="error200"></errorEventDefinition>
       </endEvent>
-      <sequenceFlow id="delegateToMinisterFlow" name="Delegate To Minister" sourceRef="errorendevent2" targetRef="errorendevent2"></sequenceFlow>
+      <sequenceFlow id="getSignatureTimeoutFlow" name="Get Signature Timeout" sourceRef="getSignatureTimer" targetRef="errorendevent2"></sequenceFlow>
     </subProcess>
     <scriptTask id="allDoneTask" name="All Done" scriptFormat="groovy" activiti:autoStoreVariables="false">
       <script>out:println "Response to correspondence received " + eCorrespondenceCandidate.receivedDate + " from " + eCorrespondenceCandidate.fromName + " on " + eCorrespondenceCandidate.subject + " was sent out by " + recipient</script>
@@ -139,20 +138,13 @@
     </boundaryEvent>
     <sequenceFlow id="flow20" sourceRef="boundaryerror2" targetRef="determineRecipient"></sequenceFlow>
     <scriptTask id="scripttask1" name="Log Delay and Reassign" scriptFormat="groovy" activiti:autoStoreVariables="false">
-      <script>out:println "*** Delayed Response *** to correspondence received " + eCorrespondenceCandidate.receivedDate + " from " + eCorrespondenceCandidate.fromName + " on " + eCorrespondenceCandidate.subject + " by " + recipient + ". Reassigning!";
-switch (recipient) {
-	case "minister":
-		execution.setVariable("recipient", "head");
-		break;
-	case "head":
-		execution.setVariable("recipient", "premier");
-		break;
-	case "premier":
-		execution.setVariable("recipient", "minister");
-		break;
-}
+      <script>//On timeout we reassign to a new recipient. The new one depends on what the old one was...
+def transitions = ['minister': 'head', 'head': 'premier', 'premier': 'minister'];
 
+out:println "*** Delayed Response *** to correspondence received " + eCorrespondenceCandidate.receivedDate + " from " + eCorrespondenceCandidate.fromName + " on " + 
+eCorrespondenceCandidate.subject + " by " + recipient + ". Reassigning to " + transitions.get(recipient) + "!";
 
+execution.setVariable('recipient', transitions.get(recipient))
 </script>
     </scriptTask>
     <sequenceFlow id="flow21" sourceRef="scripttask1" targetRef="officialDocWorkFlow"></sequenceFlow>
@@ -189,7 +181,7 @@ switch (recipient) {
       <bpmndi:BPMNShape bpmnElement="confirmMinister" id="BPMNShape_confirmMinister">
         <omgdc:Bounds height="65.0" width="105.0" x="1710.0" y="280.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="giveToHeadTimer" id="BPMNShape_giveToHeadTimer">
+      <bpmndi:BPMNShape bpmnElement="confirmMinisterTimer" id="BPMNShape_confirmMinisterTimer">
         <omgdc:Bounds height="30.0" width="30.0" x="1780.0" y="330.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="officialDocFlowStart" id="BPMNShape_officialDocFlowStart">
@@ -199,15 +191,15 @@ switch (recipient) {
         <omgdc:Bounds height="35.0" width="35.0" x="1970.0" y="369.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="getSignature" id="BPMNShape_getSignature">
-        <omgdc:Bounds height="55.0" width="105.0" x="1526.0" y="380.0"></omgdc:Bounds>
+        <omgdc:Bounds height="55.0" width="105.0" x="1570.0" y="390.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="giveToMinisterTimer" id="BPMNShape_giveToMinisterTimer">
-        <omgdc:Bounds height="30.0" width="30.0" x="1606.0" y="420.0"></omgdc:Bounds>
+      <bpmndi:BPMNShape bpmnElement="getSignatureTimer" id="BPMNShape_getSignatureTimer">
+        <omgdc:Bounds height="30.0" width="30.0" x="1650.0" y="430.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="acknowledgeHead" id="BPMNShape_acknowledgeHead">
         <omgdc:Bounds height="71.0" width="105.0" x="1606.0" y="620.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="giveToPremierTimer" id="BPMNShape_giveToPremierTimer">
+      <bpmndi:BPMNShape bpmnElement="acknowledgeHeadTimer" id="BPMNShape_acknowledgeHeadTimer">
         <omgdc:Bounds height="30.0" width="30.0" x="1686.0" y="680.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="errorendevent1" id="BPMNShape_errorendevent1">
@@ -247,14 +239,14 @@ switch (recipient) {
         <omgdi:waypoint x="690.0" y="763.0"></omgdi:waypoint>
         <omgdi:waypoint x="890.0" y="681.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="42.0" width="100.0" x="792.0" y="721.0"></omgdc:Bounds>
+          <omgdc:Bounds height="39.0" width="100.0" x="792.0" y="721.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="ArchiveFlow" id="BPMNEdge_ArchiveFlow">
         <omgdi:waypoint x="690.0" y="803.0"></omgdi:waypoint>
         <omgdi:waypoint x="1745.0" y="1071.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="38.0" x="792.0" y="865.0"></omgdc:Bounds>
+          <omgdc:Bounds height="13.0" width="37.0" x="792.0" y="865.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow11" id="BPMNEdge_flow11">
@@ -269,21 +261,21 @@ switch (recipient) {
         <omgdi:waypoint x="1340.0" y="360.0"></omgdi:waypoint>
         <omgdi:waypoint x="1762.0" y="345.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="89.0" x="1380.0" y="319.0"></omgdc:Bounds>
+          <omgdc:Bounds height="39.0" width="89.0" x="1380.0" y="319.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="headResponseFlow" id="BPMNEdge_headResponseFlow">
         <omgdi:waypoint x="1320.0" y="380.0"></omgdi:waypoint>
         <omgdi:waypoint x="1658.0" y="620.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="77.0" x="1290.0" y="464.0"></omgdc:Bounds>
+          <omgdc:Bounds height="39.0" width="77.0" x="1290.0" y="464.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="premierResponseFlow" id="BPMNEdge_premierResponseFlow">
         <omgdi:waypoint x="1340.0" y="360.0"></omgdi:waypoint>
-        <omgdi:waypoint x="1578.0" y="380.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1622.0" y="390.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="88.0" x="1359.0" y="378.0"></omgdc:Bounds>
+          <omgdc:Bounds height="39.0" width="88.0" x="1359.0" y="378.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="ministerConfirmedFlow" id="BPMNEdge_ministerConfirmedFlow">
@@ -291,14 +283,14 @@ switch (recipient) {
         <omgdi:waypoint x="1912.0" y="340.0"></omgdi:waypoint>
         <omgdi:waypoint x="1987.0" y="369.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="42.0" width="100.0" x="1819.0" y="245.0"></omgdc:Bounds>
+          <omgdc:Bounds height="39.0" width="100.0" x="1819.0" y="245.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="changeMyMindFlow" id="BPMNEdge_changeMyMindFlow">
         <omgdi:waypoint x="1754.0" y="220.0"></omgdi:waypoint>
         <omgdi:waypoint x="1665.0" y="223.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="100.0" x="1650.0" y="168.0"></omgdc:Bounds>
+          <omgdc:Bounds height="13.0" width="88.0" x="1650.0" y="168.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow10" id="BPMNEdge_flow10">
@@ -310,38 +302,38 @@ switch (recipient) {
         <omgdi:waypoint x="1300.0" y="360.0"></omgdi:waypoint>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="premierSignedFlow" id="BPMNEdge_premierSignedFlow">
-        <omgdi:waypoint x="1631.0" y="407.0"></omgdi:waypoint>
-        <omgdi:waypoint x="1970.0" y="386.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1675.0" y="417.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1987.0" y="404.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="100.0" x="1770.0" y="453.0"></omgdc:Bounds>
+          <omgdc:Bounds height="13.0" width="74.0" x="1841.0" y="376.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="headAcknowledgedFlow" id="BPMNEdge_headAcknowledgedFlow">
         <omgdi:waypoint x="1658.0" y="620.0"></omgdi:waypoint>
         <omgdi:waypoint x="1987.0" y="404.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="42.0" width="100.0" x="1751.0" y="520.0"></omgdc:Bounds>
+          <omgdc:Bounds height="13.0" width="100.0" x="1795.0" y="440.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="delegateToMinisterFlow" id="BPMNEdge_delegateToMinisterFlow">
-        <omgdi:waypoint x="1915.0" y="677.0"></omgdi:waypoint>
-        <omgdi:waypoint x="1915.0" y="677.0"></omgdi:waypoint>
-        <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="42.0" width="100.0" x="802.0" y="556.0"></omgdc:Bounds>
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="delegateToHeadFlow" id="BPMNEdge_delegateToHeadFlow">
+      <bpmndi:BPMNEdge bpmnElement="confirmMinisterTimeoutFlow" id="BPMNEdge_confirmMinisterTimeoutFlow">
         <omgdi:waypoint x="1795.0" y="360.0"></omgdi:waypoint>
         <omgdi:waypoint x="1897.0" y="660.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="100.0" x="1725.0" y="380.0"></omgdc:Bounds>
+          <omgdc:Bounds height="39.0" width="100.0" x="1766.0" y="412.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="delegateToPremierFlow" id="BPMNEdge_delegateToPremierFlow">
+      <bpmndi:BPMNEdge bpmnElement="acknowledgeHeadTimeoutFlow" id="BPMNEdge_acknowledgeHeadTimeoutFlow">
         <omgdi:waypoint x="1716.0" y="695.0"></omgdi:waypoint>
         <omgdi:waypoint x="1880.0" y="677.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="42.0" width="100.0" x="1627.0" y="556.0"></omgdc:Bounds>
+          <omgdc:Bounds height="39.0" width="100.0" x="1740.0" y="647.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="getSignatureTimeoutFlow" id="BPMNEdge_getSignatureTimeoutFlow">
+        <omgdi:waypoint x="1665.0" y="460.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1897.0" y="660.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="39.0" width="100.0" x="1659.0" y="490.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow17" id="BPMNEdge_flow17">

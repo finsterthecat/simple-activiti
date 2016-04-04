@@ -1,2 +1,7 @@
 /target/
 /nbproject/
+*.bar
+
+*.jar
+
+.bpmn/
