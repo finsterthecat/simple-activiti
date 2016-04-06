@@ -16,7 +16,7 @@ import org.junit.Test;
 
 public class ProcessTestEcorrespondenceTriage {
 
-	private String filename = "C:\\Users\\BrouwerTo\\Documents\\NetBeansProjects\\SimpleActiviti\\src\\main\\resources\\chapter5\\correspondencetriage.bpmn";
+	private String filename = "C:\\Users\\BrouwerTo\\Documents\\NetBeansProjects\\SimpleActiviti\\src\\main\\resources\\chapter5\\correspondencetriage2.bpmn";
 
 	@Rule
 	public ActivitiRule activitiRule = new ActivitiRule("activiti.cfg-test3.xml");
