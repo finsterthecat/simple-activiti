@@ -16,7 +16,7 @@ import org.junit.Test;
 
 public class ProcessTestEcorrespondenceTriage {
 
-	private String filename = "C:\\Users\\BrouwerTo\\Documents\\NetBeansProjects\\SimpleActiviti\\src\\main\\resources\\chapter5\\correspondencetriage2.bpmn";
+	private String filename = "C:\\Users\\BrouwerTo\\Documents\\NetBeansProjects\\SimpleActiviti\\src\\main\\resources\\chapter5\\correspondencetriage3.bpmn";
 
 	@Rule
 	public ActivitiRule activitiRule = new ActivitiRule("activiti.cfg-test3.xml");
@@ -29,9 +29,9 @@ public class ProcessTestEcorrespondenceTriage {
 				new FileInputStream(filename)).deploy();
 		RuntimeService runtimeService = activitiRule.getRuntimeService();
 		Map<String, Object> variableMap = new HashMap<String, Object>();
-		variableMap.put("subject", "Activiti");
-		variableMap.put("fromName", "Activiti");
-		variableMap.put("emailAddress", "Activiti");
+		variableMap.put("subject", "actactactactactactactactactactactactactactactactactactactactactactactactactactactactactactactact");
+		variableMap.put("fromName", "actactactactactactactactactactactactactactactact");
+		variableMap.put("emailAddress", "Activiti@x.com");
 		variableMap.put("receivedDate", new Date());
 		ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("ecorrespondenceTriage", variableMap);
 		assertNotNull(processInstance.getId());
