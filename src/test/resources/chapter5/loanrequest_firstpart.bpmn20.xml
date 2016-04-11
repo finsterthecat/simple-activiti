@@ -8,7 +8,7 @@
     <process id="loanrequest" name="Process to handle a loan request">
         <startEvent id="theStart" />
         <sequenceFlow sourceRef="theStart" targetRef="checkCredit" />
-        <scriptTask id="checkCredit" scriptFormat="groovy" activiti:autoStoreVariables="true">
+        <scriptTask id="checkCredit" scriptFormat="groovy">
             <script>
                 out:println "Checking credit for " + name;
                 creditCheckOk = false;
@@ -16,6 +16,7 @@
                 creditCheckOk = true;
                 }
                 out:println "Checked credit for " + name + " outcome is " + creditCheckOk;
+                execution.setVariable("creditCheckOk", creditCheckOk);
             </script>
         </scriptTask>
         <sequenceFlow sourceRef="checkCredit" targetRef="createApplication" />

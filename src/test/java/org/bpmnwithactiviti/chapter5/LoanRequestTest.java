@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.activiti.engine.history.HistoricDetail;
 import org.activiti.engine.history.HistoricVariableUpdate;
@@ -44,12 +45,21 @@ public class LoanRequestTest {
             .asc()
             .list();
 
-    historyVariables.stream().map((hd) -> (HistoricVariableUpdate) hd).forEach((hvu) -> {
-      log.debug("history! " + hvu.getVariableName() + " = " + hvu.getValue());
+    historyVariables.stream().map(hd -> (HistoricVariableUpdate) hd).forEach((hvu) -> {
+      log.debug("history! " + hvu.getVariableName() + "rev" + hvu.getRevision() + " = " + hvu.getValue());
     });
+    
+    //better...
+    Map<String, Object> hvMap = historyVariables
+    	.stream()
+    	.map(hd -> (HistoricVariableUpdate) hd)
+    	.collect(Collectors.toMap(HistoricVariableUpdate::getVariableName, HistoricVariableUpdate::getValue));
+    assertEquals(true, ((LoanApplication) hvMap.get("loanApplication")).isCreditCheckOk());
+    
+    //worse... No guarantee it's element 4
     assertNotNull(historyVariables);
-    assertEquals(7, historyVariables.size());
-    HistoricVariableUpdate loanAppUpdate = ((HistoricVariableUpdate) historyVariables.get(5));
+    assertEquals(6, historyVariables.size());
+    HistoricVariableUpdate loanAppUpdate = ((HistoricVariableUpdate) historyVariables.get(4));
     assertEquals("loanApplication", loanAppUpdate.getVariableName());
     LoanApplication la = (LoanApplication) loanAppUpdate.getValue();
     assertEquals(true, la.isCreditCheckOk());
