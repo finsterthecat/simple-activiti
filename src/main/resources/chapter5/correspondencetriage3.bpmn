@@ -106,8 +106,8 @@
       <script>execution.setVariable('recipient', 'premier')</script>
     </scriptTask>
   </process>
-  <bpmndi:BPMNDiagram id="BPMNDiagram_ecorrespondenceTriage2">
-    <bpmndi:BPMNPlane bpmnElement="ecorrespondenceTriage2" id="BPMNPlane_ecorrespondenceTriage2">
+  <bpmndi:BPMNDiagram id="BPMNDiagram_ecorrespondenceTriage3">
+    <bpmndi:BPMNPlane bpmnElement="ecorrespondenceTriage3" id="BPMNPlane_ecorrespondenceTriage3">
       <bpmndi:BPMNShape bpmnElement="theStart" id="BPMNShape_theStart">
         <omgdc:Bounds height="35.0" width="35.0" x="100.0" y="758.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
@@ -200,7 +200,7 @@
         <omgdi:waypoint x="1774.0" y="240.0"></omgdi:waypoint>
         <omgdi:waypoint x="1927.0" y="295.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="100.0" x="1819.0" y="245.0"></omgdc:Bounds>
+          <omgdc:Bounds height="14.0" width="84.0" x="1819.0" y="245.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="signatureBadFlow" id="BPMNEdge_signatureBadFlow">
@@ -208,7 +208,7 @@
         <omgdi:waypoint x="1516.0" y="203.0"></omgdi:waypoint>
         <omgdi:waypoint x="1362.0" y="285.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="42.0" width="100.0" x="1540.0" y="213.0"></omgdc:Bounds>
+          <omgdc:Bounds height="14.0" width="100.0" x="1540.0" y="213.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow10" id="BPMNEdge_flow10">

@@ -1,0 +1,290 @@
+#
+# Organizations
+#
+orgs:
+  MoE: Ministry of Environment
+  TBS: Treasury Board Secretariat
+
+#
+# Users have scopes. Within each scope are assigned roles for one organization
+#
+users:
+  waldo:
+    scopes:
+      -
+        org: MoE
+        roles: [leader, writer, coordinator]
+      -
+        org: TBS
+        roles: [leader]
+  nancy:
+    scopes:
+      -
+        org: MoE
+        roles: [writer]
+      -
+        org: TBS
+        roles: [coordinator, leader, writer]
+  horace:
+    scopes:
+      -
+        org: MoE
+        roles: [manager, writer]
+  sammy:
+    scopes:
+      -
+        org: TBS
+        roles: [manager]
+
+#
+# Permissions are objects (case or intake) and associated actions. Each action has instance type. This determines the type
+# of the entity for which the id is passed.
+#
+objects:
+  case:
+    review: case
+    compose: case
+    distribute: case
+    sensitive: case
+  intake:
+    update: case
+    classify: case
+  incoming:
+    create: org
+
+#
+# Roles (here and according to RBAC) are collections of permissions.
+#
+roles:
+	leader: ["case:review", "intake:classify"]
+	writer: ["case:compose"]
+	coordinator: ["intake:*", "incoming:*", "case:distribute", "case:review", "security:read", "case:sensitive"]
+  manager: ["case:review"]
+
+#
+# Cases represent a correspondence on which workflow defines tasks to be performed
+#
+cases:
+  -
+    num: 1234
+    org: MoE
+    subject: Teacher work to rule
+  -
+    num: 1235
+    org: TBS
+    subject: 407 fees
+  -
+    num: 1236
+    org: MoE
+    subject: Noisy wind turbines
+  -
+    num: 1237
+    org: TBS
+    subject: MRI wait times
+  -
+    num: 1238
+    org: MoE
+    subject: Crowded classrooms
+  -
+    num: 1239
+    org: TBS
+    subject: Solar farm proposal
+  -
+    num: 1240
+    org: MoE
+    subject: Hospital closing in Sudbury
+  -
+    num: 1241
+    org: TBS
+    subjet: Highway extension
+
+#
+# Tasks are steps in a workflow. They are for a case. They are assigned to a role or roles.
+# Users that can claim this task will belong to one of the roles for the organization to which the case belongs.
+#
+tasks:
+  -
+    num: 1
+    object: case:1234
+    name: intake update
+    permission: intake:update
+    assign: [coordinator, leader]
+  -
+    num: 2
+    object: case:1234
+    name: intake classify
+    permission: intake:classify
+    assign: [coordinator]
+  -
+    num: 3
+    object: case:1235
+    name: manager review
+    permission: case:review
+    assign: [manager]
+  -
+    num: 4
+    object: case:1236
+    name: leader review
+    permission: case:review
+    assign: [leader]
+  -
+    num: 5
+    object: case:1237
+    name: compose
+    permission: case:compose
+    assign: [writer]
+  -
+    num: 6
+    object: case:1238
+    name: compose
+    permission: case:compose
+    assign: [writer]
+  -
+    num: 7
+    object: case:1239
+    name: intake
+    permission: intake:classify
+    assign: [coordinator]
+  -
+    num: 8
+    object: case:1240
+    name: sensitive review
+    permission: case:sensitive
+    assign: [coordinator]
+  -
+    num: 9
+    object: case:1241
+    name: distribute
+    permission: case:distribute
+    assign: [coordinator]
+  -
+    num: 10
+    object: incoming:MoE
+    name: incoming
+    permission: incoming:create
+    assign: [coordinator]
+  -
+    num: 11
+    object: incoming:TBS
+    name: incoming
+    permission: incoming:create
+    assign: [coordinator]
+
+#
+# expected task numbers that show on queue screen
+#
+test-queues:
+  -
+    user: waldo
+    expected: [1, 2, 3, 4, 5, 6, 8, 10]
+  -
+    user: nancy
+    expected: [5, 6, 7, 9, 11]
+  -
+    user: horace
+    expected: [4]
+  -
+    user: sammy
+    expected: [3]
+
+#
+# user, permission, expected response
+#
+test-permitted:
+  - [waldo, intake:update:1234, true]
+  - [nancy, intake:update:1234, false]
+  - [horace, intake:update:1234, false]
+  - [waldo, intake:classify:1234, true]
+  - [nancy, intake:classify:1234, false]
+  - [horace, intake:classify:1234, false]
+  - [waldo, case:review:1235, true]
+  - [nancy, case:review:1235, true]
+  - [horace, case:review:1235, false]
+  - [waldo, case:review:1236, true]
+  - [nancy, case:review:1236, false]
+  - [horace, case:review:1236, true]
+  - [waldo, case:compose:1237, false]
+  - [nancy, case:compose:1237, true]
+  - [horace, case:compose:1237, false]
+  - [waldo, case:compose:1238, false]
+  - [nancy, case:compose:1238, true]
+  - [horace, case:compose:1238, false]
+  - [waldo, intake:classify:1239, true]
+  - [nancy, intake:classify:1239, true]
+  - [horace, intake:classify:1239, false]
+  - [waldo, case:sensitive:1240, true]
+  - [nancy, case:sensitive:1240, false]
+  - [horace, case:sensitive:1240, false]
+  - [waldo, case:distribute:1241, false]
+  - [nancy, case:distribute:1241, true]
+  - [horace, case:distribute:1241, false]
+  - [waldo, incoming:create:MoE, true]
+  - [nancy, incoming:create:MoE, false]
+  - [horace, incoming:create:MoE, false]
+  - [waldo, incoming:create:TBS, false]
+  - [nancy, incoming:create:TBS, true]
+  - [horace, incoming:create:TBS, false]
+
+#
+# Who is permitted for permissions? Each permission is associated with the list of expected users.
+# Test that the expected users are returned.
+#
+test-permitted-users:
+  intake:update:1234: [waldo]
+  intake:classify:1234: [waldo]
+  case:review:1235: [waldo, nancy, sammy]
+  case:review:1236: [waldo, horace]
+  case:compose:1237: [nancy]
+  case:compose:1238: [nancy, horace]
+  intake:classify:1239: [waldo, nancy]
+  case:sensitive:1240: [waldo]
+  case:distribute:1241: [nancy]
+  incoming:create:MoE: [waldo]
+  incoming:create:TBS: [nancy]
+
+#
+# Get a list of users that share the same role.
+# Test the expected users are returned
+#
+test-users-for-role:
+  manager:TBS: [sammy]
+  manager:MoE: [horace]
+  writer:MoE: [nancy]
+  coordinator:TBS: [nancy]
+  leader:TBS: [nancy, waldo]
+  writer:TBS: [nancy]
+  leader:MoE: [waldo]
+  coordinator:MoE: [waldo]
+
+#
+# Get a list of permission actions given user, permission object, and case
+# Expected actions are specified.
+# Test the expected actions are returned
+#
+test-actions:
+  -
+    user: sammy
+    object: case
+    case: 1235
+    actions: [review]
+  -
+    user: sammy
+    object: case
+    case: 1234
+    actions: []
+  -
+    user: waldo
+    object: case
+    case: 1234
+    actions: [review, compose, distribute, review, sensitive]
+  -
+    user: nancy
+    object: case
+    case: 1234
+    actions: [compose]
+  -
+    user: nancy
+    object: incoming
+    org: TBS
+    case: NIL
+    actions: [update, classify]
