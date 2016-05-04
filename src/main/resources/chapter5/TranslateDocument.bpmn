@@ -3,12 +3,12 @@
   <process id="myProcess" name="My process" isExecutable="true">
     <startEvent id="startevent1" name="Start"></startEvent>
     <userTask id="usertask1" name="Translate Document"></userTask>
-    <sequenceFlow id="flow1" name="Begin" sourceRef="startevent1" targetRef="usertask1"></sequenceFlow>
+    <sequenceFlow id="flow1" name="Request Translation" sourceRef="startevent1" targetRef="usertask1"></sequenceFlow>
     <endEvent id="endevent1" name="End"></endEvent>
     <userTask id="usertask2" name="Evaluate Translation"></userTask>
     <serviceTask id="servicetask1" name="Save To Correspondence"></serviceTask>
     <exclusiveGateway id="exclusivegateway1" name="Exclusive Gateway"></exclusiveGateway>
-    <sequenceFlow id="flow4" sourceRef="usertask2" targetRef="exclusivegateway1"></sequenceFlow>
+    <sequenceFlow id="flow4" name="Evaluate" sourceRef="usertask2" targetRef="exclusivegateway1"></sequenceFlow>
     <sequenceFlow id="flow5" name="Changes Requested" sourceRef="exclusivegateway1" targetRef="usertask1"></sequenceFlow>
     <sequenceFlow id="flow6" name="Accepted" sourceRef="exclusivegateway1" targetRef="servicetask1"></sequenceFlow>
     <sequenceFlow id="flow8" sourceRef="servicetask1" targetRef="endevent1"></sequenceFlow>
@@ -18,7 +18,7 @@
     <sequenceFlow id="flow9" sourceRef="usertask1" targetRef="exclusivegateway2"></sequenceFlow>
     <sequenceFlow id="flow10" name="Translated" sourceRef="exclusivegateway2" targetRef="usertask2"></sequenceFlow>
     <userTask id="usertask3" name="Answer Questions"></userTask>
-    <sequenceFlow id="flow11" name="Questions" sourceRef="exclusivegateway2" targetRef="usertask3"></sequenceFlow>
+    <sequenceFlow id="flow11" name="Submit Questions" sourceRef="exclusivegateway2" targetRef="usertask3"></sequenceFlow>
     <exclusiveGateway id="exclusivegateway3" name="Exclusive Gateway"></exclusiveGateway>
     <sequenceFlow id="flow12" sourceRef="usertask3" targetRef="exclusivegateway3"></sequenceFlow>
     <sequenceFlow id="flow13" name="Answered" sourceRef="exclusivegateway3" targetRef="usertask1"></sequenceFlow>
@@ -65,12 +65,15 @@
         <omgdi:waypoint x="147.0" y="347.0"></omgdi:waypoint>
         <omgdi:waypoint x="320.0" y="347.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="27.0" x="164.0" y="312.0"></omgdc:Bounds>
+          <omgdc:Bounds height="42.0" width="100.0" x="164.0" y="312.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow4" id="BPMNEdge_flow4">
         <omgdi:waypoint x="650.0" y="375.0"></omgdi:waypoint>
         <omgdi:waypoint x="650.0" y="413.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="100.0" x="660.0" y="385.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow5" id="BPMNEdge_flow5">
         <omgdi:waypoint x="630.0" y="433.0"></omgdi:waypoint>
@@ -113,7 +116,7 @@
         <omgdi:waypoint x="510.0" y="327.0"></omgdi:waypoint>
         <omgdi:waypoint x="510.0" y="271.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="49.0" x="514.0" y="297.0"></omgdc:Bounds>
+          <omgdc:Bounds height="14.0" width="100.0" x="514.0" y="297.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow12" id="BPMNEdge_flow12">
@@ -124,7 +127,7 @@
         <omgdi:waypoint x="372.0" y="263.0"></omgdi:waypoint>
         <omgdi:waypoint x="372.0" y="320.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="14.0" width="52.0" x="377.0" y="295.0"></omgdc:Bounds>
+          <omgdc:Bounds height="14.0" width="52.0" x="375.0" y="273.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flow14" id="BPMNEdge_flow14">
