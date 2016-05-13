@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
+  <process id="myProcess" name="My process" isExecutable="true">
+    <startEvent id="startEvent" name="Start">
+      <extensionElements>
+        <activiti:formProperty id="incomingCorrId" name="Incoming Correspondence Id" type="long" required="true"></activiti:formProperty>
+      </extensionElements>
+    </startEvent>
+    <userTask id="triageTask" name="Triage" activiti:candidateGroups="coordinator">
+      <documentation>Identifies incoming correspondences as official or not.
+Adds instructions for the creation of the response</documentation>
+      <extensionElements>
+        <activiti:formProperty id="isOfficial" name="Classify this correspondence as official?" type="enum" required="true">
+          <activiti:value id="true" name="Yes"></activiti:value>
+          <activiti:value id="false" name="No"></activiti:value>
+        </activiti:formProperty>
+        <activiti:formProperty id="instructions" name="Instructions" type="string"></activiti:formProperty>
+      </extensionElements>
+    </userTask>
+    <sequenceFlow id="preTriageFlow" sourceRef="startEvent" targetRef="triageTask"></sequenceFlow>
+    <exclusiveGateway id="exclusivegateway1" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="postTriageFlow" sourceRef="triageTask" targetRef="exclusivegateway1"></sequenceFlow>
+    <serviceTask id="noResponseTask" name="No Response">
+      <documentation>Marks the Incoming as "No Response"</documentation>
+    </serviceTask>
+    <sequenceFlow id="notOfficialFlow" name="No Response" sourceRef="exclusivegateway1" targetRef="noResponseTask">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${isOfficial == false}]]></conditionExpression>
+    </sequenceFlow>
+    <userTask id="composeTask" name="Compose" activiti:candidateGroups="writer">
+      <documentation>Create/Edit the response</documentation>
+    </userTask>
+    <userTask id="usertask2" name="Review" activiti:candidateGroups="reviewer">
+      <extensionElements>
+        <activiti:formProperty id="isReviewerApproved" name="Do you approve this response?" type="enum" required="true">
+          <activiti:value id="true" name="Yes"></activiti:value>
+          <activiti:value id="false" name="No"></activiti:value>
+        </activiti:formProperty>
+        <activiti:formProperty id="reviewerNotes" name="Notes" type="string"></activiti:formProperty>
+      </extensionElements>
+    </userTask>
+    <sequenceFlow id="postComposeFlow" sourceRef="composeTask" targetRef="usertask2"></sequenceFlow>
+    <exclusiveGateway id="exclusivegateway2" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="postReviewFlow" sourceRef="usertask2" targetRef="saveReviewerNotesTask"></sequenceFlow>
+    <sequenceFlow id="reviewerRejectFlow" name="Reject" sourceRef="exclusivegateway2" targetRef="composeTask">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${isReviewerApproved == false}]]></conditionExpression>
+    </sequenceFlow>
+    <userTask id="usertask3" name="Approve" activiti:candidateGroups="approver">
+      <extensionElements>
+        <activiti:formProperty id="isApproverApproved" name="Do you approve this response?" type="enum" required="true">
+          <activiti:value id="true" name="Yes"></activiti:value>
+          <activiti:value id="false" name="No"></activiti:value>
+        </activiti:formProperty>
+        <activiti:formProperty id="approverNotes" name="Notes" type="string"></activiti:formProperty>
+      </extensionElements>
+    </userTask>
+    <sequenceFlow id="reviewerApproveFlow" name="Approve" sourceRef="exclusivegateway2" targetRef="usertask3">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${isReviewerApproved == true}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="postApproveFlow" sourceRef="usertask3" targetRef="saveApproverNotesTask"></sequenceFlow>
+    <endEvent id="endevent1" name="End"></endEvent>
+    <sequenceFlow id="flow11" sourceRef="noResponseTask" targetRef="endevent1"></sequenceFlow>
+    <userTask id="closeTask" name="Close" activiti:candidateGroups="coordinator">
+      <documentation>User reviews Single Correspondence before marking as closed</documentation>
+    </userTask>
+    <endEvent id="endevent" name="End"></endEvent>
+    <serviceTask id="createCaseTask" name="Create Case">
+      <documentation>This will create a new Single Correspondence.
+It will set the Case Id to the newly created Single Correspondence.
+It will also assign the user who did the triage to the Close task.</documentation>
+    </serviceTask>
+    <sequenceFlow id="officialFlow" name="Official" sourceRef="exclusivegateway1" targetRef="createCaseTask">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${isOfficial == true}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="postCreateFlow" sourceRef="createCaseTask" targetRef="composeTask"></sequenceFlow>
+    <serviceTask id="saveReviewerNotesTask" name="Save Reviewer Notes">
+      <documentation>Saves the reviewer notes (if non-empty) into the list of notes</documentation>
+    </serviceTask>
+    <sequenceFlow id="postSaveReviewerNotesFlow" sourceRef="saveReviewerNotesTask" targetRef="exclusivegateway2"></sequenceFlow>
+    <serviceTask id="saveApproverNotesTask" name="Save Approver Notes">
+      <documentation>Saves the approver's notes into the notes collection.</documentation>
+    </serviceTask>
+    <sequenceFlow id="postSaveApproverNotesFlow" sourceRef="saveApproverNotesTask" targetRef="exclusivegateway3"></sequenceFlow>
+    <serviceTask id="markAsClosedTask" name="Mark as Closed">
+      <documentation>Marks the Single Correspondence as closed. Any other "closing" activities go here.</documentation>
+    </serviceTask>
+    <sequenceFlow id="postCloseFlow" sourceRef="closeTask" targetRef="markAsClosedTask"></sequenceFlow>
+    <sequenceFlow id="postMarkAsCloseFlow" sourceRef="markAsClosedTask" targetRef="endevent"></sequenceFlow>
+    <textAnnotation id="textannotation1">
+      <text>Here the coordinator identifies incoming as official or not. Also provides instructions.</text>
+    </textAnnotation>
+    <textAnnotation id="textannotation2">
+      <text>Sets status to NORESPONSE</text>
+    </textAnnotation>
+    <textAnnotation id="textannotation3">
+      <text>This will create a new Single Correspondence.
+It will set the Case Id to the newly created Single Correspondence.
+It will also assign the user who did the triage to the Close task.</text>
+    </textAnnotation>
+    <textAnnotation id="textannotation4">
+      <text>Writer composes response</text>
+    </textAnnotation>
+    <textAnnotation id="textannotation5">
+      <text>Reviewer reviews response</text>
+    </textAnnotation>
+    <textAnnotation id="textannotation6">
+      <text>Approver approves the response</text>
+    </textAnnotation>
+    <textAnnotation id="textannotation7">
+      <text>The user who triaged gets to close the case one it's done.`</text>
+    </textAnnotation>
+    <textAnnotation id="textannotation8">
+      <text>Saves the reviewer's notes into the Case notes</text>
+    </textAnnotation>
+    <textAnnotation id="textannotation9">
+      <text>Save the approver's notes.</text>
+    </textAnnotation>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_myProcess">
+    <bpmndi:BPMNPlane bpmnElement="myProcess" id="BPMNPlane_myProcess">
+      <bpmndi:BPMNShape bpmnElement="startEvent" id="BPMNShape_startEvent">
+        <omgdc:Bounds height="35.0" width="35.0" x="33.0" y="172.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="triageTask" id="BPMNShape_triageTask">
+        <omgdc:Bounds height="55.0" width="105.0" x="162.0" y="162.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway1" id="BPMNShape_exclusivegateway1">
+        <omgdc:Bounds height="40.0" width="40.0" x="305.0" y="169.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="noResponseTask" id="BPMNShape_noResponseTask">
+        <omgdc:Bounds height="55.0" width="105.0" x="273.0" y="269.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="composeTask" id="BPMNShape_composeTask">
+        <omgdc:Bounds height="55.0" width="105.0" x="580.0" y="162.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="usertask2" id="BPMNShape_usertask2">
+        <omgdc:Bounds height="55.0" width="105.0" x="580.0" y="282.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway2" id="BPMNShape_exclusivegateway2">
+        <omgdc:Bounds height="40.0" width="40.0" x="909.0" y="289.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="usertask3" id="BPMNShape_usertask3">
+        <omgdc:Bounds height="55.0" width="105.0" x="877.0" y="384.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent1" id="BPMNShape_endevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="308.0" y="359.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="closeTask" id="BPMNShape_closeTask">
+        <omgdc:Bounds height="55.0" width="105.0" x="1060.0" y="559.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent" id="BPMNShape_endevent">
+        <omgdc:Bounds height="35.0" width="35.0" x="1095.0" y="734.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="createCaseTask" id="BPMNShape_createCaseTask">
+        <omgdc:Bounds height="55.0" width="105.0" x="420.0" y="162.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="saveReviewerNotesTask" id="BPMNShape_saveReviewerNotesTask">
+        <omgdc:Bounds height="69.0" width="105.0" x="750.0" y="275.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="saveApproverNotesTask" id="BPMNShape_saveApproverNotesTask">
+        <omgdc:Bounds height="67.0" width="105.0" x="1060.0" y="378.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="markAsClosedTask" id="BPMNShape_markAsClosedTask">
+        <omgdc:Bounds height="55.0" width="105.0" x="1060.0" y="650.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="textannotation1" id="BPMNShape_textannotation1">
+        <omgdc:Bounds height="70.0" width="153.0" x="150.0" y="80.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="textannotation2" id="BPMNShape_textannotation2">
+        <omgdc:Bounds height="50.0" width="100.0" x="177.0" y="292.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="textannotation3" id="BPMNShape_textannotation3">
+        <omgdc:Bounds height="100.0" width="231.0" x="377.0" y="50.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="textannotation4" id="BPMNShape_textannotation4">
+        <omgdc:Bounds height="50.0" width="100.0" x="640.0" y="100.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="textannotation5" id="BPMNShape_textannotation5">
+        <omgdc:Bounds height="50.0" width="100.0" x="500.0" y="248.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="textannotation6" id="BPMNShape_textannotation6">
+        <omgdc:Bounds height="50.0" width="100.0" x="800.0" y="387.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="textannotation7" id="BPMNShape_textannotation7">
+        <omgdc:Bounds height="67.0" width="100.0" x="949.0" y="553.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="textannotation8" id="BPMNShape_textannotation8">
+        <omgdc:Bounds height="69.0" width="100.0" x="753.0" y="198.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="textannotation9" id="BPMNShape_textannotation9">
+        <omgdc:Bounds height="50.0" width="100.0" x="1082.0" y="323.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="preTriageFlow" id="BPMNEdge_preTriageFlow">
+        <omgdi:waypoint x="68.0" y="189.0"></omgdi:waypoint>
+        <omgdi:waypoint x="162.0" y="189.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="postTriageFlow" id="BPMNEdge_postTriageFlow">
+        <omgdi:waypoint x="267.0" y="189.0"></omgdi:waypoint>
+        <omgdi:waypoint x="305.0" y="189.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="notOfficialFlow" id="BPMNEdge_notOfficialFlow">
+        <omgdi:waypoint x="325.0" y="209.0"></omgdi:waypoint>
+        <omgdi:waypoint x="325.0" y="269.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="100.0" x="250.0" y="234.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="postComposeFlow" id="BPMNEdge_postComposeFlow">
+        <omgdi:waypoint x="632.0" y="217.0"></omgdi:waypoint>
+        <omgdi:waypoint x="632.0" y="230.0"></omgdi:waypoint>
+        <omgdi:waypoint x="632.0" y="282.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="postReviewFlow" id="BPMNEdge_postReviewFlow">
+        <omgdi:waypoint x="685.0" y="309.0"></omgdi:waypoint>
+        <omgdi:waypoint x="750.0" y="309.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="reviewerRejectFlow" id="BPMNEdge_reviewerRejectFlow">
+        <omgdi:waypoint x="929.0" y="289.0"></omgdi:waypoint>
+        <omgdi:waypoint x="929.0" y="189.0"></omgdi:waypoint>
+        <omgdi:waypoint x="858.0" y="189.0"></omgdi:waypoint>
+        <omgdi:waypoint x="685.0" y="189.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="100.0" x="939.0" y="236.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="reviewerApproveFlow" id="BPMNEdge_reviewerApproveFlow">
+        <omgdi:waypoint x="929.0" y="329.0"></omgdi:waypoint>
+        <omgdi:waypoint x="929.0" y="384.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="100.0" x="939.0" y="349.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="postApproveFlow" id="BPMNEdge_postApproveFlow">
+        <omgdi:waypoint x="982.0" y="411.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1060.0" y="411.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow11" id="BPMNEdge_flow11">
+        <omgdi:waypoint x="325.0" y="324.0"></omgdi:waypoint>
+        <omgdi:waypoint x="325.0" y="359.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="officialFlow" id="BPMNEdge_officialFlow">
+        <omgdi:waypoint x="345.0" y="189.0"></omgdi:waypoint>
+        <omgdi:waypoint x="420.0" y="189.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="100.0" x="359.0" y="198.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="postCreateFlow" id="BPMNEdge_postCreateFlow">
+        <omgdi:waypoint x="525.0" y="189.0"></omgdi:waypoint>
+        <omgdi:waypoint x="580.0" y="189.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="postSaveReviewerNotesFlow" id="BPMNEdge_postSaveReviewerNotesFlow">
+        <omgdi:waypoint x="855.0" y="309.0"></omgdi:waypoint>
+        <omgdi:waypoint x="909.0" y="309.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="postCloseFlow" id="BPMNEdge_postCloseFlow">
+        <omgdi:waypoint x="1112.0" y="614.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1112.0" y="650.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="postMarkAsCloseFlow" id="BPMNEdge_postMarkAsCloseFlow">
+        <omgdi:waypoint x="1112.0" y="705.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1112.0" y="734.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
